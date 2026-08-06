@@ -1,0 +1,9 @@
+# 运行依赖（conda 虚拟环境 img_bg_rm，Python 3.12）
+# 说明：PyTorch / torchvision 需按 CUDA 12 单独安装，见 README“环境配置指南”。
+fastapi==0.141.1
+uvicorn==0.52.1
+opencv-python==5.0.0.93
+rembg==2.0.77
+onnxruntime-gpu==1.26.0
+pillow==12.2.0
+numpy==2.4.4
