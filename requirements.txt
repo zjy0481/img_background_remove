@@ -7,3 +7,4 @@ rembg==2.0.77
 onnxruntime-gpu==1.26.0
 pillow==12.2.0
 numpy==2.4.4
+sam2==1.1.0

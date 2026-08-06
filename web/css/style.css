@@ -138,3 +138,140 @@ main {
 .statusbar.ok {
   color: #27ae60;
 }
+
+/* ---------- M1：文件列表 / 批量处理 / 结果列表 / 大图预览 ---------- */
+.primary {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+/* 修复：工具栏按钮选择器（.panel-toolbar button）优先级更高，会覆盖 .primary 的背景，
+   导致“开始批量处理”白底白字不可见；此处显式提高优先级覆盖。 */
+.panel-toolbar .primary {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.progress {
+  color: #2980b9;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.file-list,
+.result-list {
+  list-style: none;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.file-item,
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #f0f0f0;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badge-processing {
+  background: #fef3cd;
+  color: #8a6d3b;
+}
+
+.badge-success {
+  background: #d4efdf;
+  color: #1e8449;
+}
+
+.badge-failed {
+  background: #fadbd8;
+  color: #c0392b;
+}
+
+.preview-btn {
+  padding: 4px 10px;
+  border: 1px solid #d5d8dc;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.model-notice {
+  font-size: 12px;
+  color: #f5b041;
+}
+
+.empty {
+  color: #95a5a6;
+  font-size: 13px;
+  padding: 12px;
+}
+
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* 修复：hidden 属性必须真正隐藏（否则 display:flex 会覆盖浏览器默认的 [hidden] 规则） */
+.preview-modal[hidden] {
+  display: none;
+}
+
+.preview-modal img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.preview-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.preview-back:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
