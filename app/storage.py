@@ -1,5 +1,6 @@
 """目录与文件约定（开发文档第 2 节）。"""
 
+import re
 from pathlib import Path
 
 from PIL import Image, ImageOps
@@ -61,12 +62,47 @@ def output_name_for(source_name: str) -> str:
     return f"{Path(source_name).stem}_no_bg.png"
 
 
+def match_source_for(processed_name: str):
+    """开发文档 3.2.2-2：去掉 _no_bg 后缀后在 source_img 中匹配原图。"""
+    stem = Path(processed_name).stem
+    if not stem.endswith("_no_bg"):
+        return None
+    base = stem[: -len("_no_bg")]
+    for cand in source_files():
+        if Path(cand).stem == base:
+            return cand
+    return None
+
+
 def source_path_for(name: str) -> Path:
     return SOURCE_DIR / name
 
 
 def processed_path_for(name: str) -> Path:
     return PROCESSED_DIR / name
+
+
+def round_path_for(processed_name: str, round_no: int) -> Path:
+    """开发文档 2.2：temp/<成品名去扩展名>_r{n}.png（如 cat_no_bg_r1.png）。"""
+    return TEMP_DIR / f"{Path(processed_name).stem}_r{round_no}.png"
+
+
+def list_round_files(processed_name: str) -> list:
+    """列出某成品已有的精修轮次文件，按轮次升序返回 [(n, Path)]。"""
+    stem = Path(processed_name).stem
+    pattern = re.compile(re.escape(stem) + r"_r(\d+)\.png$")
+    found = []
+    for p in TEMP_DIR.iterdir():
+        m = pattern.match(p.name)
+        if m:
+            found.append((int(m.group(1)), p))
+    return sorted(found)
+
+
+def next_round(processed_name: str) -> int:
+    """下一个精修轮次号（r0 视为批量自动结果）。"""
+    rounds = list_round_files(processed_name)
+    return (rounds[-1][0] + 1) if rounds else 1
 
 
 def thumbnail_path(kind: str, name: str) -> Path:

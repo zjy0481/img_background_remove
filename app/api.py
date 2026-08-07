@@ -21,6 +21,7 @@ from urllib.parse import quote
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from PIL import Image
 from pydantic import BaseModel
 
 from . import matting, storage
@@ -40,6 +41,12 @@ _jobs_lock = threading.Lock()
 
 class BatchStartRequest(BaseModel):
     files: list[str]
+    model: str = "birefnet"
+
+
+class RefineSubmitRequest(BaseModel):
+    name: str  # processed_img 成品文件名（如 cat_no_bg.png）
+    strokes: list = []
     model: str = "birefnet"
 
 
@@ -186,6 +193,58 @@ def batch_status(job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     return job
+
+
+@app.get("/api/refine/match")
+def refine_match(name: str = Query(...)):
+    """按成品文件名匹配原图（开发文档 3.2.2-2）。"""
+    src = storage.match_source_for(name)
+    if src is None:
+        raise HTTPException(status_code=404, detail="未在 source_img 中匹配到原图")
+    return {"name": name, "source": src, "ok": True}
+
+
+@app.post("/api/refine/submit")
+def refine_submit(req: RefineSubmitRequest):
+    """提交精修：结合涂鸦 + 原图重新抠图，结果存 temp 并返回轮次。"""
+    if not matting.is_supported(req.model):
+        model_name = matting.MODELS.get(req.model, {}).get("name", req.model)
+        raise HTTPException(
+            status_code=400,
+            detail=f"模型 {model_name} 尚未接入（后续版本实现），当前请使用 BiRefNet",
+        )
+    proc_path = storage.processed_path_for(req.name)
+    if not proc_path.is_file():
+        raise HTTPException(status_code=404, detail="成品文件不存在")
+    src_name = storage.match_source_for(req.name)
+    if src_name is None:
+        raise HTTPException(status_code=404, detail="未在 source_img 中匹配到原图")
+
+    with Image.open(storage.source_path_for(src_name)) as img:
+        out = matting.refine_remove(req.model, img.convert("RGB"), req.strokes)
+    round_no = storage.next_round(req.name)
+    dst = storage.round_path_for(req.name, round_no)
+    out.save(dst, "PNG")
+
+    return {
+        "round": round_no,
+        "url": f"/api/refine/round?name={quote(req.name)}&round={round_no}",
+        "prev_url": (
+            f"/api/refine/round?name={quote(req.name)}&round={round_no - 1}"
+            if round_no > 1
+            else _file_url("processed", req.name)
+        ),
+        "file": str(dst.relative_to(storage.ROOT)).replace("\\", "/"),
+    }
+
+
+@app.get("/api/refine/round")
+def refine_round(name: str = Query(...), round: int = Query(...)):
+    """读取指定精修轮次结果图。"""
+    path = storage.round_path_for(name, round)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="轮次文件不存在")
+    return FileResponse(path, media_type="image/png")
 
 
 app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")

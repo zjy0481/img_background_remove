@@ -41,22 +41,51 @@
     </section>
 
     <section id="page-refine" class="page">
-      <div class="panel">
+      <div class="panel refine-list-panel">
         <h2>成品列表（processed_img）</h2>
-        <p class="placeholder">精修功能将在后续版本提供</p>
+        <div class="panel-toolbar">
+          <button type="button" id="btn-refine-refresh">刷新</button>
+          <span class="refine-hint" id="refine-hint">请选择一张成品图开始精修</span>
+        </div>
+        <ul class="result-list" id="refine-file-list"></ul>
+        <p class="empty" id="refine-file-empty" hidden>暂无成品，请先在批量模式处理图片</p>
       </div>
-      <div class="slots">
+      <div class="refine-workspace">
         <div class="panel">
-          <h2>图槽 1：原图 + 涂鸦</h2>
-          <p class="placeholder">精修功能将在后续版本提供</p>
+          <!-- 图槽 1：原图 + 涂鸦（开发者备注，界面不显示“图槽”字样） -->
+          <h2>原图 + 涂鸦</h2>
+          <div class="toolbar-row">
+            <button type="button" id="btn-brush" class="tool-btn active">画笔</button>
+            <button type="button" id="btn-eraser" class="tool-btn">橡皮</button>
+            <label class="size-label">粗细
+              <input type="range" id="brush-size" min="1" max="100" value="12">
+              <input type="number" id="brush-size-num" min="1" max="100" value="12">
+            </label>
+            <button type="button" id="btn-undo" class="tool-btn">撤销</button>
+            <button type="button" id="btn-clear" class="tool-btn">清空</button>
+            <button type="button" id="btn-toggle-strokes" class="tool-btn">显隐涂鸦</button>
+            <span class="round-label" id="round-label"></span>
+          </div>
+          <div class="canvas-wrap" id="canvas-wrap1">
+            <canvas id="canvas1"></canvas>
+            <p class="canvas-hint">左键涂鸦 · 中键拖动平移 · 滚轮缩放</p>
+          </div>
         </div>
         <div class="panel">
-          <h2>图槽 2：结果</h2>
+          <!-- 图槽 2：当前结果（开发者备注，界面不显示“图槽”字样） -->
+          <h2>当前结果</h2>
           <div class="tabbar">
-            <button type="button" class="tab active">精修前</button>
-            <button type="button" class="tab">精修后</button>
+            <button type="button" class="tab active" id="tab-prev">精修前</button>
+            <button type="button" class="tab" id="tab-next">精修后</button>
           </div>
-          <p class="placeholder">精修功能将在后续版本提供</p>
+          <div class="canvas-wrap" id="canvas-wrap2">
+            <canvas id="canvas2"></canvas>
+            <p class="canvas-hint">中键拖动平移 · 滚轮缩放（与左侧同步）</p>
+          </div>
+          <div class="toolbar-row">
+            <button type="button" id="btn-submit" class="primary" disabled>提交重抠</button>
+            <span class="progress" id="refine-progress" hidden></span>
+          </div>
         </div>
       </div>
     </section>

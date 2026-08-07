@@ -275,3 +275,106 @@ main {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
+
+/* ---------- M2：人工辅助精修 ---------- */
+.refine-list-panel {
+  flex: 0 0 240px;
+}
+
+.refine-workspace {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.refine-workspace .panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.tool-btn {
+  padding: 5px 10px;
+  border: 1px solid #d5d8dc;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.tool-btn.active {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+.size-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.size-label input[type="number"] {
+  width: 56px;
+  padding: 4px;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+}
+
+.round-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.canvas-wrap {
+  position: relative;
+  height: 480px;
+  background: repeating-conic-gradient(#eeeeee 0% 25%, #ffffff 0% 50%) 0 0 / 24px 24px;
+  border: 1px solid #d5d8dc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.canvas-wrap canvas {
+  display: block;
+}
+
+.canvas-hint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.refine-hint {
+  color: #95a5a6;
+  font-size: 13px;
+}
+
+#refine-file-list .result-item {
+  cursor: pointer;
+}
+
+#refine-file-list .result-item.selected {
+  background: #eafaf1;
+  outline: 1px solid #1abc9c;
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
