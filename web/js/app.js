@@ -327,6 +327,7 @@ const btnToggleStrokes = document.getElementById("btn-toggle-strokes");
 const roundLabel = document.getElementById("round-label");
 const btnSubmit = document.getElementById("btn-submit");
 const refineProgress = document.getElementById("refine-progress");
+const refineLogicSelect = document.getElementById("refine-logic-select");
 const tabPrev = document.getElementById("tab-prev");
 const tabNext = document.getElementById("tab-next");
 
@@ -504,6 +505,51 @@ async function loadRefineFiles() {
   }
 }
 
+async function loadRefineLogics() {
+  try {
+    const res = await fetch("/api/refine/logics");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    refineLogicSelect.innerHTML = "";
+    const descBox = document.getElementById("logic-desc-box");
+    descBox.innerHTML = "";
+    for (const l of data.logics) {
+      const opt = document.createElement("option");
+      opt.value = l.id;
+      opt.textContent = l.name; // 仅显示逻辑名称
+      if (l.id === currentLogic) opt.selected = true;
+      refineLogicSelect.appendChild(opt);
+
+      const item = document.createElement("div");
+      item.className = "logic-desc-item";
+      const title = document.createElement("strong");
+      title.textContent = l.name;
+      item.appendChild(title);
+      if (l.remark) {
+        const remark = document.createElement("span");
+        remark.className = "logic-desc-remark";
+        remark.textContent = l.remark;
+        item.appendChild(remark);
+      }
+      if (l.description) {
+        const detail = document.createElement("p");
+        detail.className = "logic-desc-detail";
+        detail.textContent = l.description;
+        item.appendChild(detail);
+      }
+      descBox.appendChild(item);
+    }
+    console.log("[refine] 精修逻辑已加载：", data.logics.map((l) => l.id).join(", "));
+  } catch (err) {
+    console.error("[refine] 加载精修逻辑失败：", err);
+  }
+}
+
+let currentLogic = "smart_region";
+refineLogicSelect.addEventListener("change", (e) => {
+  currentLogic = e.target.value;
+});
+
 function renderRefineFiles(files) {
   refineFileList.innerHTML = "";
   refineFileEmpty.hidden = files.length > 0;
@@ -574,6 +620,7 @@ async function submitRefine() {
         name: refine.processedName,
         strokes: refine.strokes,
         model: currentModel,
+        logic: currentLogic,
       }),
     });
     if (!res.ok) {
@@ -681,6 +728,7 @@ function bindRefineEvents() {
   });
   btnToggleStrokes.addEventListener("click", () => {
     refine.showStrokes = !refine.showStrokes;
+    updateStrokeToggleLabel();
     drawAll();
   });
   btnRefineRefresh.addEventListener("click", loadRefineFiles);
@@ -720,7 +768,13 @@ function initRefine() {
   setupCanvases();
   bindRefineEvents();
   updateTabUI();
+  updateStrokeToggleLabel();
   loadRefineFiles();
+  loadRefineLogics();
+}
+
+function updateStrokeToggleLabel() {
+  btnToggleStrokes.textContent = refine.showStrokes ? "隐藏涂鸦" : "显示涂鸦";
 }
 
 /* ---------- 服务健康检查 ---------- */

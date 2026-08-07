@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
 
-from . import matting, storage
+from . import matting, refine, storage
 
 app = FastAPI(title="图片背景去除工具", version="0.2.0-M1")
 
@@ -48,6 +48,7 @@ class RefineSubmitRequest(BaseModel):
     name: str  # processed_img 成品文件名（如 cat_no_bg.png）
     strokes: list = []
     model: str = "birefnet"
+    logic: str = "smart_region"
 
 
 def _thumb_url(kind: str, name: str) -> str:
@@ -204,6 +205,22 @@ def refine_match(name: str = Query(...)):
     return {"name": name, "source": src, "ok": True}
 
 
+@app.get("/api/refine/logics")
+def refine_logics():
+    """精修逻辑下拉框数据源（当前仅“智能区域去除”）。"""
+    return {
+        "logics": [
+            {
+                "id": lid,
+                "name": meta["name"],
+                "remark": meta["remark"],
+                "description": meta.get("description", ""),
+            }
+            for lid, meta in refine.REFINE_LOGICS.items()
+        ]
+    }
+
+
 @app.post("/api/refine/submit")
 def refine_submit(req: RefineSubmitRequest):
     """提交精修：结合涂鸦 + 原图重新抠图，结果存 temp 并返回轮次。"""
@@ -220,8 +237,11 @@ def refine_submit(req: RefineSubmitRequest):
     if src_name is None:
         raise HTTPException(status_code=404, detail="未在 source_img 中匹配到原图")
 
-    with Image.open(storage.source_path_for(src_name)) as img:
-        out = matting.refine_remove(req.model, img.convert("RGB"), req.strokes)
+    try:
+        with Image.open(storage.source_path_for(src_name)) as img:
+            out = refine.run_refine(req.logic, req.model, img.convert("RGB"), req.strokes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     round_no = storage.next_round(req.name)
     dst = storage.round_path_for(req.name, round_no)
     out.save(dst, "PNG")

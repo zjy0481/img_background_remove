@@ -63,7 +63,7 @@
             </label>
             <button type="button" id="btn-undo" class="tool-btn">撤销</button>
             <button type="button" id="btn-clear" class="tool-btn">清空</button>
-            <button type="button" id="btn-toggle-strokes" class="tool-btn">显隐涂鸦</button>
+            <button type="button" id="btn-toggle-strokes" class="tool-btn">隐藏涂鸦</button>
             <span class="round-label" id="round-label"></span>
           </div>
           <div class="canvas-wrap" id="canvas-wrap1">
@@ -78,6 +78,11 @@
             <button type="button" class="tab active" id="tab-prev">精修前</button>
             <button type="button" class="tab" id="tab-next">精修后</button>
           </div>
+          <div class="logic-select-row">
+            <label class="size-label">精修逻辑选择
+              <select id="refine-logic-select"></select>
+            </label>
+          </div>
           <div class="canvas-wrap" id="canvas-wrap2">
             <canvas id="canvas2"></canvas>
             <p class="canvas-hint">中键拖动平移 · 滚轮缩放（与左侧同步）</p>
@@ -88,6 +93,8 @@
           </div>
         </div>
       </div>
+      <!-- 精修逻辑说明框（位于图槽 1、2 下方） -->
+      <div class="logic-desc-box" id="logic-desc-box"></div>
     </section>
   </main>
 

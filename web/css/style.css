@@ -329,6 +329,12 @@ main {
   border-radius: 4px;
 }
 
+.size-label select {
+  padding: 4px 8px;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+}
+
 .round-label {
   font-size: 12px;
   font-weight: 600;
@@ -377,4 +383,49 @@ main {
 .tab:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 精修逻辑选择（图槽 2 画布上方）与说明框（两槽下方） */
+#page-refine {
+  flex-wrap: wrap;
+}
+
+.logic-select-row {
+  margin-bottom: 10px;
+}
+
+.logic-desc-box {
+  flex: 1 1 100%;
+  background: #fbfcfd;
+  border: 1px dashed #d5d8dc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+
+.logic-desc-item {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.logic-desc-item strong {
+  color: #2c3e50;
+  margin-right: 8px;
+}
+
+.logic-desc-remark {
+  color: #1abc9c;
+  margin-right: 8px;
+}
+
+.logic-desc-detail {
+  margin: 4px 0 0;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+#btn-submit {
+  padding: 9px 24px;
+  font-size: 15px;
 }
