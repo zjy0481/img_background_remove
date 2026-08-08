@@ -16,6 +16,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import shutil
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Query
@@ -49,6 +50,15 @@ class RefineSubmitRequest(BaseModel):
     strokes: list = []
     model: str = "birefnet"
     logic: str = "smart_region"
+
+
+class RefineSaveRequest(BaseModel):
+    name: str
+    round: int | None = None
+
+
+class RefineClearRequest(BaseModel):
+    name: str
 
 
 def _thumb_url(kind: str, name: str) -> str:
@@ -97,11 +107,11 @@ def processed_files():
 
 
 @app.get("/api/thumbnail")
-def thumbnail(kind: str = Query(...), name: str = Query(...)):
+def thumbnail(kind: str = Query(...), name: str = Query(...), refresh: int = 0):
     if kind not in ("source", "processed"):
         raise HTTPException(status_code=400, detail="kind 仅支持 source / processed")
     try:
-        path = storage.ensure_thumbnail(kind, name)
+        path = storage.ensure_thumbnail(kind, name, force=bool(refresh))
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     return FileResponse(path, media_type="image/png")
@@ -221,6 +231,30 @@ def refine_logics():
     }
 
 
+@app.get("/api/refine/state")
+def refine_state(name: str = Query(...)):
+    """精修状态：已有轮次、涂鸦缓存、前后结果 URL（用于刷新/重开后恢复）。"""
+    if not storage.processed_path_for(name).is_file():
+        raise HTTPException(status_code=404, detail="成品文件不存在")
+    rounds = storage.list_round_files(name)
+    ann = storage.load_annotation(name) or {}
+    latest = rounds[-1][0] if rounds else 0
+    return {
+        "name": name,
+        "round": latest,
+        "rounds": [n for n, _ in rounds],
+        "strokes": ann.get("strokes", []),
+        "prev_url": (
+            f"/api/refine/round?name={quote(name)}&round={latest - 1}"
+            if latest > 1
+            else _file_url("processed", name)
+        )
+        if latest
+        else None,
+        "next_url": f"/api/refine/round?name={quote(name)}&round={latest}" if latest else None,
+    }
+
+
 @app.post("/api/refine/submit")
 def refine_submit(req: RefineSubmitRequest):
     """提交精修：结合涂鸦 + 原图重新抠图，结果存 temp 并返回轮次。"""
@@ -245,6 +279,10 @@ def refine_submit(req: RefineSubmitRequest):
     round_no = storage.next_round(req.name)
     dst = storage.round_path_for(req.name, round_no)
     out.save(dst, "PNG")
+    storage.save_annotation(
+        req.name,
+        {"processed_name": req.name, "round": round_no, "strokes": req.strokes},
+    )
 
     return {
         "round": round_no,
@@ -256,6 +294,70 @@ def refine_submit(req: RefineSubmitRequest):
         ),
         "file": str(dst.relative_to(storage.ROOT)).replace("\\", "/"),
     }
+
+
+@app.post("/api/refine/save")
+def refine_save(req: RefineSaveRequest):
+    """保存精修结果：用指定（默认最新）轮次覆盖 processed_img，旧版先备份。"""
+    proc_path = storage.processed_path_for(req.name)
+    if not proc_path.is_file():
+        raise HTTPException(status_code=404, detail="成品文件不存在")
+    rounds = storage.list_round_files(req.name)
+    if not rounds:
+        raise HTTPException(status_code=400, detail="没有可保存的精修结果，请先提交重抠")
+    round_no = req.round if req.round is not None else rounds[-1][0]
+    src = storage.round_path_for(req.name, round_no)
+    if not src.is_file():
+        raise HTTPException(status_code=404, detail=f"轮次 {round_no} 文件不存在")
+    backup_name = None
+    try:
+        storage.BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        backup_path = storage.backup_path_for(req.name)
+        shutil.copy2(proc_path, backup_path)
+        backup_name = backup_path.name
+        shutil.copy2(src, proc_path)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"保存失败，原文件未覆盖：{exc}")
+    return {"saved": True, "round": round_no, "backup": backup_name}
+
+
+@app.post("/api/refine/clear-cache")
+def refine_clear_cache(req: RefineClearRequest):
+    """清除指定成品的涂鸦缓存与轮次中间结果（保留 temp/backup/）。"""
+    ann_cleared = storage.clear_annotation(req.name)
+    rounds_cleared = storage.clear_round_files(req.name)
+    return {"cleared": True, "annotation": ann_cleared, "round_files": rounds_cleared}
+
+
+@app.post("/api/refine/revert-round")
+def refine_revert_round(req: RefineClearRequest):
+    """回退本轮修改：删除最新轮次结果图与属于该轮的涂鸦数据。"""
+    if not storage.processed_path_for(req.name).is_file():
+        raise HTTPException(status_code=404, detail="成品文件不存在")
+    rounds = storage.list_round_files(req.name)
+    if not rounds:
+        raise HTTPException(status_code=400, detail="没有可回退的轮次")
+    latest = rounds[-1][0]
+    storage.round_path_for(req.name, latest).unlink(missing_ok=True)
+    ann = storage.load_annotation(req.name) or {}
+    strokes = [
+        s for s in ann.get("strokes", []) if int(s.get("round", 0)) != latest
+    ]
+    if strokes:
+        storage.save_annotation(
+            req.name, {**ann, "round": latest - 1, "strokes": strokes}
+        )
+    else:
+        storage.clear_annotation(req.name)
+    remaining = [n for n, _ in storage.list_round_files(req.name)]
+    return {"reverted": True, "round": latest - 1, "rounds": remaining}
+
+
+@app.post("/api/refine/clear-backup")
+def refine_clear_backup():
+    """清除 temp/backup/ 下全部备份（不可恢复）。"""
+    count = storage.clear_backups()
+    return {"cleared": True, "count": count}
 
 
 @app.get("/api/refine/round")

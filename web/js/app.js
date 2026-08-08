@@ -69,26 +69,31 @@ const btnSelectNone = document.getElementById("btn-select-none");
 const btnBatchStart = document.getElementById("btn-batch-start");
 const resultListEl = document.getElementById("result-list");
 const resultEmptyEl = document.getElementById("result-empty");
+const btnResultRefresh = document.getElementById("btn-result-refresh");
 
 let sourceFiles = [];
 let batchRunning = false;
 const resultItems = new Map();
 
-async function loadSourceFiles() {
+function thumbUrl(url, force) {
+  // force=true 时给缩略图接口追加 refresh=1，强制重建缩略图
+  return force ? url + (url.indexOf("?") >= 0 ? "&refresh=1" : "?refresh=1") : url;
+}
+
+async function loadSourceFiles(forceThumbs = false) {
   try {
     const res = await fetch("/api/source-files");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     sourceFiles = data.files;
-    renderFileList();
-    loadProcessedFiles();
+    renderFileList(forceThumbs);
     console.log("[files] source_img 文件列表已加载：", sourceFiles.map((f) => f.name).join(", "));
   } catch (err) {
     console.error("[files] 加载文件列表失败：", err);
   }
 }
 
-function renderFileList() {
+function renderFileList(forceThumbs = false) {
   fileListEl.innerHTML = "";
   fileEmptyEl.hidden = sourceFiles.length > 0;
   for (const f of sourceFiles) {
@@ -103,7 +108,7 @@ function renderFileList() {
 
     const img = document.createElement("img");
     img.className = "thumb";
-    img.src = f.thumb_url;
+    img.src = thumbUrl(f.thumb_url, forceThumbs);
     img.alt = f.name;
 
     const span = document.createElement("span");
@@ -123,7 +128,8 @@ function checkedNames() {
   );
 }
 
-btnRefresh.addEventListener("click", loadSourceFiles);
+btnRefresh.addEventListener("click", () => loadSourceFiles(true));
+btnResultRefresh.addEventListener("click", () => loadProcessedFiles(true));
 btnSelectAll.addEventListener("click", () => {
   fileListEl.querySelectorAll(".file-check").forEach((cb) => (cb.checked = true));
   console.log("[select] 已全选，勾选数量：", checkedNames().length);
@@ -213,7 +219,7 @@ function statusText(status) {
   return "失败";
 }
 
-function renderResults(results) {
+function renderResults(results, forceThumbs = false) {
   for (const r of results) {
     const key = resultKey(r);
     let li = resultItems.get(key);
@@ -223,7 +229,7 @@ function renderResults(results) {
       resultItems.set(key, li);
       resultListEl.appendChild(li);
     }
-    updateResultItem(li, r, key);
+    updateResultItem(li, r, key, forceThumbs);
   }
   console.log("[results] 已渲染结果：", results.map((r) => resultKey(r) + "=" + r.status).join(", "));
   resultEmptyEl.hidden = resultListEl.children.length > 0;
@@ -234,7 +240,7 @@ function resultKey(r) {
   return r.output_name || r.name;
 }
 
-function updateResultItem(li, r, key) {
+function updateResultItem(li, r, key, forceThumbs = false) {
   li.innerHTML = "";
   const displayName = r.output_name || r.name;
 
@@ -243,7 +249,10 @@ function updateResultItem(li, r, key) {
   img.alt = displayName;
   const thumbName = r.output_name || r.name;
   if (r.status === "success") {
-    img.src = "/api/thumbnail?kind=processed&name=" + encodeURIComponent(thumbName);
+    img.src = thumbUrl(
+      "/api/thumbnail?kind=processed&name=" + encodeURIComponent(thumbName),
+      forceThumbs
+    );
   }
 
   const span = document.createElement("span");
@@ -267,13 +276,14 @@ function updateResultItem(li, r, key) {
   li.appendChild(btn);
 }
 
-async function loadProcessedFiles() {
+async function loadProcessedFiles(forceThumbs = false) {
   try {
     const res = await fetch("/api/processed-files");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     renderResults(
-      data.files.map((f) => ({ name: f.name, status: "success", output_name: f.name }))
+      data.files.map((f) => ({ name: f.name, status: "success", output_name: f.name })),
+      forceThumbs
     );
   } catch (err) {
     console.error("[results] 加载处理结果失败：", err);
@@ -326,6 +336,10 @@ const btnClear = document.getElementById("btn-clear");
 const btnToggleStrokes = document.getElementById("btn-toggle-strokes");
 const roundLabel = document.getElementById("round-label");
 const btnSubmit = document.getElementById("btn-submit");
+const btnSave = document.getElementById("btn-save");
+const btnClearCache = document.getElementById("btn-clear-cache");
+const btnClearBackup = document.getElementById("btn-clear-backup");
+const btnRevert = document.getElementById("btn-revert");
 const refineProgress = document.getElementById("refine-progress");
 const refineLogicSelect = document.getElementById("refine-logic-select");
 const tabPrev = document.getElementById("tab-prev");
@@ -493,12 +507,12 @@ function loadRefineImage(store, key, url) {
   });
 }
 
-async function loadRefineFiles() {
+async function loadRefineFiles(forceThumbs = false) {
   try {
     const res = await fetch("/api/processed-files");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
-    renderRefineFiles(data.files);
+    renderRefineFiles(data.files, forceThumbs);
     console.log("[refine] 成品列表已加载：", data.files.map((f) => f.name).join(", "));
   } catch (err) {
     console.error("[refine] 加载成品列表失败：", err);
@@ -550,7 +564,7 @@ refineLogicSelect.addEventListener("change", (e) => {
   currentLogic = e.target.value;
 });
 
-function renderRefineFiles(files) {
+function renderRefineFiles(files, forceThumbs = false) {
   refineFileList.innerHTML = "";
   refineFileEmpty.hidden = files.length > 0;
   for (const f of files) {
@@ -560,7 +574,7 @@ function renderRefineFiles(files) {
     if (f.name === refine.processedName) li.classList.add("selected");
     const img = document.createElement("img");
     img.className = "thumb";
-    img.src = f.thumb_url;
+    img.src = thumbUrl(f.thumb_url, forceThumbs);
     img.alt = f.name;
     const span = document.createElement("span");
     span.className = "file-name";
@@ -580,18 +594,34 @@ async function selectRefineItem(name) {
       throw new Error(e.detail || "匹配失败");
     }
     const data = await res.json();
+    const stRes = await fetch("/api/refine/state?name=" + encodeURIComponent(name));
+    if (!stRes.ok) throw new Error("查询精修状态失败");
+    const st = await stRes.json();
     refine.processedName = name;
     refine.sourceName = data.source;
-    refine.round = 0;
-    refine.strokes = [];
+    refine.round = st.round || 0;
+    refine.strokes = st.strokes || [];
     refine.imgNext = null;
     refine.tab = "prev";
     updateTabUI();
     await loadRefineImage(refine, "imgOriginal", "/api/file?kind=source&name=" + encodeURIComponent(data.source));
-    await loadRefineImage(refine, "imgPrev", "/api/file?kind=processed&name=" + encodeURIComponent(name));
+    await loadRefineImage(
+      refine,
+      "imgPrev",
+      st.prev_url || "/api/file?kind=processed&name=" + encodeURIComponent(name)
+    );
+    if (st.next_url) {
+      await loadRefineImage(refine, "imgNext", st.next_url);
+      refine.tab = "next";
+    }
+    updateTabUI();
+    btnSave.disabled = !refine.imgNext;
+    btnRevert.disabled = !(refine.round > 0);
     fitView(refine.imgOriginal.naturalWidth, refine.imgOriginal.naturalHeight);
     btnSubmit.disabled = false;
-    refineHint.textContent = "已选择：" + name + "（原图 " + data.source + "）";
+    refineHint.textContent =
+      "已选择：" + name + "（原图 " + data.source + "）" +
+      (st.round ? "，已恢复第 " + st.round + " 轮缓存" : "");
     updateRoundLabel();
     drawAll();
     document.querySelectorAll("#refine-file-list .result-item").forEach((li) => {
@@ -633,6 +663,8 @@ async function submitRefine() {
     await loadRefineImage(refine, "imgNext", data.url);
     refine.tab = "next";
     updateTabUI();
+    btnSave.disabled = false;
+    btnRevert.disabled = false;
     refineProgress.textContent = "第 " + data.round + " 轮精修完成";
     updateRoundLabel();
     drawAll();
@@ -715,6 +747,104 @@ function attachCanvasEvents(cv, isSlot1) {
   );
 }
 
+async function saveRefine() {
+  if (!refine.processedName || !refine.imgNext) return;
+  btnSave.disabled = true;
+  try {
+    const res = await fetch("/api/refine/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: refine.processedName, round: refine.round }),
+    });
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.detail || "HTTP " + res.status);
+    }
+    const data = await res.json();
+    refineHint.textContent =
+      "已保存第 " + data.round + " 轮结果" +
+      (data.backup ? "（旧版备份：" + data.backup + "）" : "");
+    alert("保存成功" + (data.backup ? "，旧版已备份：" + data.backup : ""));
+  } catch (err) {
+    alert("保存失败：" + err.message);
+  } finally {
+    btnSave.disabled = !refine.imgNext;
+  }
+}
+
+async function clearCache() {
+  if (!refine.processedName) return;
+  if (!confirm("确定清除该图片的涂鸦缓存与轮次中间结果？temp/backup 备份不受影响。")) return;
+  try {
+    const res = await fetch("/api/refine/clear-cache", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: refine.processedName }),
+    });
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.detail || "HTTP " + res.status);
+    }
+    const data = await res.json();
+    refine.round = 0;
+    refine.strokes = [];
+    refine.imgNext = null;
+    refine.tab = "prev";
+    updateTabUI();
+    btnSave.disabled = true;
+    btnRevert.disabled = true;
+    await loadRefineImage(
+      refine,
+      "imgPrev",
+      "/api/file?kind=processed&name=" + encodeURIComponent(refine.processedName)
+    );
+    updateRoundLabel();
+    drawAll();
+    refineHint.textContent = "已清除缓存（涂鸦与轮次结果）";
+    alert("已清除缓存：涂鸦记录" + (data.annotation ? "已删除" : "无") + "，轮次文件 " + data.round_files + " 个");
+    console.log("[refine] 清除缓存：", data);
+  } catch (err) {
+    alert("清除缓存失败：" + err.message);
+  }
+}
+
+async function clearBackup() {
+  if (!confirm("确定删除 temp/backup 下全部备份？该操作不可恢复。")) return;
+  try {
+    const res = await fetch("/api/refine/clear-backup", { method: "POST" });
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.detail || "HTTP " + res.status);
+    }
+    const data = await res.json();
+    alert("已清除备份：" + data.count + " 个文件");
+  } catch (err) {
+    alert("清除备份失败：" + err.message);
+  }
+}
+
+async function revertRound() {
+  if (!refine.processedName || !refine.round) return;
+  if (!confirm("回退本轮修改？将删除本轮涂鸦数据与结果图。")) return;
+  try {
+    const res = await fetch("/api/refine/revert-round", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: refine.processedName }),
+    });
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.detail || "HTTP " + res.status);
+    }
+    const data = await res.json();
+    await selectRefineItem(refine.processedName); // 重新加载涂鸦与结果图，刷新两个图槽
+    refineHint.textContent = "已回退本轮修改";
+    console.log("[refine] 回退本轮：", data);
+  } catch (err) {
+    alert("回退失败：" + err.message);
+  }
+}
+
 function bindRefineEvents() {
   btnBrush.addEventListener("click", () => setTool("brush"));
   btnEraser.addEventListener("click", () => setTool("eraser"));
@@ -731,8 +861,12 @@ function bindRefineEvents() {
     updateStrokeToggleLabel();
     drawAll();
   });
-  btnRefineRefresh.addEventListener("click", loadRefineFiles);
+  btnRefineRefresh.addEventListener("click", () => loadRefineFiles(true));
   btnSubmit.addEventListener("click", submitRefine);
+  btnSave.addEventListener("click", saveRefine);
+  btnRevert.addEventListener("click", revertRound);
+  btnClearCache.addEventListener("click", clearCache);
+  btnClearBackup.addEventListener("click", clearBackup);
 
   brushSize.addEventListener("input", () => {
     brushSizeNum.value = brushSize.value;
@@ -795,5 +929,6 @@ async function checkHealth() {
 /* ---------- 初始化 ---------- */
 loadModels();
 loadSourceFiles();
+loadProcessedFiles();
 initRefine();
 checkHealth();

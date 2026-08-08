@@ -6,12 +6,14 @@
 
 ## 功能说明
 
+顶栏的“抠图模型”下拉框可选择推理模型（当前批量与精修均使用 BiRefNet，SAM2 / ToonOut 将在后续版本接入）。
+
 ### 批量模式
 
 - **文件列表**：显示 `source_img/` 中图片的缩略图与文件名，支持手动刷新；
 - **选择文件**：多选、全选、全不选（默认全选）；
 - **批量处理**：对勾选的图片逐张去除背景（串行执行），实时显示处理进度；结果输出到 `processed_img/`（PNG 格式，文件名为原文件名加 `_no_bg`）；
-- **处理结果列表**：显示文件名、缩略图与状态（处理中 / 成功 / 失败），失败项可重新勾选后再次处理；
+- **处理结果列表**：显示文件名、缩略图与状态（处理中 / 成功 / 失败），失败项可重新勾选后再次处理；列表支持手动刷新，刷新会重新生成缩略图；
 - **大图预览**：点击结果列表中的文件名或缩略图可查看大图，左上角“返回列表”按钮返回，也可按 `Esc` 或点击图片区域外关闭。
 
 ### 精修模式
@@ -22,6 +24,11 @@
 - **轮次颜色**：不同轮次的涂鸦使用不同颜色，便于区分；
 - **提交重抠**：涂鸦区域将被视为背景，结合原图重新抠图，结果保存为轮次文件并显示在右侧结果区；
 - **前后对比**：右侧结果区顶部标签栏可切换“精修前 / 精修后”查看效果。
+- **多轮涂鸦缓存**：刷新页面或重新打开后，之前的涂鸦与轮次结果会自动恢复，可继续在新轮次上补充涂鸦；
+- **回退本轮修改**：可删除最新一轮的涂鸦与结果图，回到本轮修改开始前的状态；
+- **保存精修结果**：用最新一轮结果覆盖 `processed_img/` 中的成品，旧版本自动备份；
+- **清除缓存 / 清除备份**：清除涂鸦缓存与轮次中间结果（备份保留）；也可删除全部备份（不可恢复）。
+- **精修逻辑选择**：可选择精修算法，当前提供“智能区域去除”——基于边缘检测与区域分割，把涂鸦所在的整块连通区域视为背景去除。
 
 ---
 
@@ -60,12 +67,14 @@ conda run -n img_bg_rm pip install -r requirements.txt
 > 说明：requirements.txt 已包含以上依赖；PyTorch 仍需按第 2 步单独安装。
 > 提示：若下载缓慢，可先设置代理（将7890替换为你的实际代理端口）：`$env:HTTP_PROXY='http://127.0.0.1:7890'; $env:HTTPS_PROXY='http://127.0.0.1:7890'`
 
-### 4. 设置 GPU 运行所需环境变量（每次运行前）
+### 4. GPU 运行所需环境变量（应用已自动设置）
+
+本工具启动时会自动设置以下环境变量（模型目录、numba 缓存目录、CUDA 运行时路径），**通常无需手动执行**。仅在使用独立脚本直接调用 rembg/onnxruntime（不经本应用）、或希望把模型 / 缓存放到自定义位置时，才需要手动设置：
 
 ```powershell
 $env:PATH = "$env:CONDA_PREFIX\Lib\site-packages\torch\lib;" + $env:PATH
-$env:NUMBA_CACHE_DIR = "C:\Users\goey8\Desktop\strange tools\img no background\temp\numba_cache"
-$env:U2NET_HOME = "C:\Users\goey8\Desktop\strange tools\img no background\temp\models"
+$env:NUMBA_CACHE_DIR = "PROGRAM_PREFIX\temp\numba_cache"
+$env:U2NET_HOME = "PROGRAM_PREFIX\temp\models"
 ```
 
 说明：
@@ -73,6 +82,7 @@ $env:U2NET_HOME = "C:\Users\goey8\Desktop\strange tools\img no background\temp\m
 - `torch\lib`：为 onnxruntime 提供 CUDA 12 运行时库（如 `cublasLt64_12.dll`）；
 - `NUMBA_CACHE_DIR`：避免 numba 缓存写入 site-packages 时被权限拦截，导致程序导入卡死；
 - `U2NET_HOME`：模型权重下载目录（首次运行自动下载，约 973MB，之后本地复用）。
+- `PROGRAM_PREFIX`：项目根目录的绝对路径
 
 ### 5. 验证 GPU 是否可用
 
@@ -110,7 +120,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 ---
 
-## 项目结构（仓库内可见部分）
+## 项目结构
 
 ```
 app/             # 后端服务（FastAPI）

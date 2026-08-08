@@ -35,6 +35,9 @@
       </div>
       <div class="panel">
         <h2>处理结果列表</h2>
+        <div class="panel-toolbar">
+          <button type="button" id="btn-result-refresh">刷新</button>
+        </div>
         <ul class="result-list" id="result-list"></ul>
         <p class="empty" id="result-empty" hidden>暂无处理结果</p>
       </div>
@@ -49,6 +52,10 @@
         </div>
         <ul class="result-list" id="refine-file-list"></ul>
         <p class="empty" id="refine-file-empty" hidden>暂无成品，请先在批量模式处理图片</p>
+        <div class="toolbar-row">
+          <button type="button" id="btn-clear-cache" class="tool-btn">清除缓存</button>
+          <button type="button" id="btn-clear-backup" class="tool-btn">清除备份</button>
+        </div>
       </div>
       <div class="refine-workspace">
         <div class="panel">
@@ -88,7 +95,9 @@
             <p class="canvas-hint">中键拖动平移 · 滚轮缩放（与左侧同步）</p>
           </div>
           <div class="toolbar-row">
+            <button type="button" id="btn-revert" class="tool-btn" disabled>回退本轮修改</button>
             <button type="button" id="btn-submit" class="primary" disabled>提交重抠</button>
+            <button type="button" id="btn-save" class="primary" disabled>保存精修结果</button>
             <span class="progress" id="refine-progress" hidden></span>
           </div>
         </div>
