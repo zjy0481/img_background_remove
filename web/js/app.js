@@ -51,12 +51,7 @@ async function loadModels() {
 
 modelSelect.addEventListener("change", (e) => {
   currentModel = e.target.value;
-  if (currentModel === "birefnet") {
-    modelNotice.hidden = true;
-  } else {
-    modelNotice.hidden = false;
-    modelNotice.textContent = "该模型将在后续版本接入批量处理";
-  }
+  modelNotice.hidden = true;
 });
 
 /* ---------- 文件列表（source_img） ---------- */
@@ -146,10 +141,6 @@ async function startBatch() {
   console.log("[batch] 开始批量处理，文件：", files.join(", "), "| 模型：", currentModel);
   if (files.length === 0) {
     alert("请先勾选要处理的文件");
-    return;
-  }
-  if (currentModel !== "birefnet") {
-    alert("当前模型尚未接入批量处理，请先切换为 BiRefNet");
     return;
   }
   batchRunning = true;

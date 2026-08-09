@@ -6,7 +6,7 @@
 
 ## 功能说明
 
-顶栏的“抠图模型”下拉框可选择推理模型（当前批量与精修均使用 BiRefNet，SAM2 / ToonOut 将在后续版本接入）。
+顶栏的“抠图模型”下拉框可选择推理模型：BiRefNet（基础，通用）、SAM2（进阶，自动掩码策略）、ToonOut（动漫角色专用）；批量处理与精修提交均使用当前所选模型。
 
 ### 批量模式
 
@@ -82,7 +82,7 @@ $env:U2NET_HOME = "PROGRAM_PREFIX\temp\models"
 - `torch\lib`：为 onnxruntime 提供 CUDA 12 运行时库（如 `cublasLt64_12.dll`）；
 - `NUMBA_CACHE_DIR`：避免 numba 缓存写入 site-packages 时被权限拦截，导致程序导入卡死；
 - `U2NET_HOME`：模型权重下载目录（首次运行自动下载，约 973MB，之后本地复用）。
-- `PROGRAM_PREFIX`：项目根目录的绝对路径
+- `PROGRAM_PREFIX`：项目根目录的绝对路径（本工具会自动获取）
 
 ### 5. 验证 GPU 是否可用
 

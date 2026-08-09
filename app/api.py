@@ -176,7 +176,7 @@ def batch_start(req: BatchStartRequest):
         model_name = matting.MODELS.get(req.model, {}).get("name", req.model)
         raise HTTPException(
             status_code=400,
-            detail=f"模型 {model_name} 尚未接入批量处理（后续版本实现），当前请使用 BiRefNet",
+            detail=f"模型 {model_name} 暂不可用，请选择 BiRefNet 或 ToonOut",
         )
     valid = [n for n in req.files if storage.source_path_for(n).is_file()]
     if not valid:
@@ -262,7 +262,7 @@ def refine_submit(req: RefineSubmitRequest):
         model_name = matting.MODELS.get(req.model, {}).get("name", req.model)
         raise HTTPException(
             status_code=400,
-            detail=f"模型 {model_name} 尚未接入（后续版本实现），当前请使用 BiRefNet",
+            detail=f"模型 {model_name} 暂不可用，请选择 BiRefNet 或 ToonOut",
         )
     proc_path = storage.processed_path_for(req.name)
     if not proc_path.is_file():
