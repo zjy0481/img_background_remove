@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片背景去除工具</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="banner">
+    <nav class="banner-nav">
+      <button class="banner-btn active" type="button" data-page="batch">批量模式</button>
+      <button class="banner-btn" type="button" data-page="refine">精修模式</button>
+    </nav>
+    <div class="banner-model">
+      <label for="model-select">抠图模型</label>
+      <select id="model-select" title="切换抠图模型"></select>
+      <span class="model-notice" id="model-notice" hidden></span>
+    </div>
+  </header>
+
+  <main>
+    <section id="page-batch" class="page active">
+      <div class="panel">
+        <h2>文件列表（source_img）</h2>
+        <div class="panel-toolbar">
+          <button type="button" id="btn-refresh">刷新</button>
+          <button type="button" id="btn-select-all">全选</button>
+          <button type="button" id="btn-select-none">全不选</button>
+          <button type="button" id="btn-batch-start" class="primary">开始批量处理</button>
+        </div>
+        <p class="progress" id="batch-progress" hidden></p>
+        <ul class="file-list" id="file-list"></ul>
+        <p class="empty" id="file-empty" hidden>source_img 中没有 .jpg/.png 图片</p>
+      </div>
+      <div class="panel">
+        <h2>处理结果列表</h2>
+        <div class="panel-toolbar">
+          <button type="button" id="btn-result-refresh">刷新</button>
+        </div>
+        <ul class="result-list" id="result-list"></ul>
+        <p class="empty" id="result-empty" hidden>暂无处理结果</p>
+      </div>
+    </section>
+
+    <section id="page-refine" class="page">
+      <div class="panel refine-list-panel">
+        <h2>成品列表（processed_img）</h2>
+        <div class="panel-toolbar">
+          <button type="button" id="btn-refine-refresh">刷新</button>
+          <span class="refine-hint" id="refine-hint">请选择一张成品图开始精修</span>
+        </div>
+        <ul class="result-list" id="refine-file-list"></ul>
+        <p class="empty" id="refine-file-empty" hidden>暂无成品，请先在批量模式处理图片</p>
+        <div class="toolbar-row">
+          <button type="button" id="btn-clear-cache" class="tool-btn">清除缓存</button>
+          <button type="button" id="btn-clear-backup" class="tool-btn">清除备份</button>
+        </div>
+      </div>
+      <div class="refine-workspace">
+        <div class="panel">
+          <!-- 图槽 1：原图 + 涂鸦（开发者备注，界面不显示“图槽”字样） -->
+          <h2>原图 + 涂鸦</h2>
+          <div class="toolbar-row">
+            <button type="button" id="btn-brush" class="tool-btn active">画笔</button>
+            <button type="button" id="btn-eraser" class="tool-btn">橡皮</button>
+            <label class="size-label">粗细
+              <input type="range" id="brush-size" min="1" max="100" value="12">
+              <input type="number" id="brush-size-num" min="1" max="100" value="12">
+            </label>
+            <button type="button" id="btn-undo" class="tool-btn">撤销</button>
+            <button type="button" id="btn-clear" class="tool-btn">清空</button>
+            <button type="button" id="btn-toggle-strokes" class="tool-btn">隐藏涂鸦</button>
+            <span class="round-label" id="round-label"></span>
+          </div>
+          <div class="canvas-wrap" id="canvas-wrap1">
+            <canvas id="canvas1"></canvas>
+            <p class="canvas-hint">左键涂鸦 · 中键拖动平移 · 滚轮缩放</p>
+          </div>
+        </div>
+        <div class="panel">
+          <!-- 图槽 2：当前结果（开发者备注，界面不显示“图槽”字样） -->
+          <h2>当前结果</h2>
+          <div class="tabbar">
+            <button type="button" class="tab active" id="tab-prev">精修前</button>
+            <button type="button" class="tab" id="tab-next">精修后</button>
+          </div>
+          <div class="logic-select-row">
+            <label class="size-label">精修逻辑选择
+              <select id="refine-logic-select"></select>
+            </label>
+          </div>
+          <div class="canvas-wrap" id="canvas-wrap2">
+            <canvas id="canvas2"></canvas>
+            <p class="canvas-hint">中键拖动平移 · 滚轮缩放（与左侧同步）</p>
+          </div>
+          <div class="toolbar-row">
+            <button type="button" id="btn-revert" class="tool-btn" disabled>回退本轮修改</button>
+            <button type="button" id="btn-submit" class="primary" disabled>提交重抠</button>
+            <button type="button" id="btn-save" class="primary" disabled>保存精修结果</button>
+            <span class="progress" id="refine-progress" hidden></span>
+          </div>
+        </div>
+      </div>
+      <!-- 精修逻辑说明框（位于图槽 1、2 下方） -->
+      <div class="logic-desc-box" id="logic-desc-box"></div>
+    </section>
+  </main>
+
+  <!-- 大图预览层（模态）：左上角返回列表按钮，Esc 或点击外部关闭 -->
+  <div id="preview-modal" class="preview-modal" hidden>
+    <button type="button" id="preview-back" class="preview-back">← 返回列表</button>
+    <img id="preview-img" alt="大图预览">
+  </div>
+
+  <footer class="statusbar" id="statusbar">正在连接服务…</footer>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# 运行依赖（conda 虚拟环境 img_bg_rm，Python 3.12）
+# 说明：PyTorch / torchvision 需按 CUDA 12 单独安装，见 README“环境配置指南”。
+fastapi==0.141.1
+uvicorn==0.52.1
+opencv-python==5.0.0.93
+rembg==2.0.77
+onnxruntime-gpu==1.26.0
+pillow==12.2.0
+numpy==2.4.4
+# ToonOut（BiRefNet torch）推理依赖
+einops==0.8.2
+kornia==0.8.3
+timm==1.0.28
+huggingface-hub==1.27.0
+# onnxscript / onnx 仅 ToonOut ONNX 导出时使用（开发用，非运行必需）

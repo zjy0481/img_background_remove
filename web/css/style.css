@@ -1,0 +1,432 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #f5f6fa;
+  color: #333;
+}
+
+/* Banner 导航（开发文档 3.2.3 / 5.5） */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2c3e50;
+  color: #fff;
+  padding: 10px 16px;
+}
+
+.banner-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.banner-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #cfd8dc;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.banner-btn.active {
+  background: #1abc9c;
+  color: #fff;
+}
+
+.banner-model {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cfd8dc;
+}
+
+#model-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+
+/* 页面 */
+main {
+  padding: 16px;
+}
+
+.page {
+  display: none;
+  gap: 16px;
+}
+
+.page.active {
+  display: flex;
+}
+
+.panel {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.panel h2 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.placeholder {
+  color: #95a5a6;
+  font-size: 13px;
+  border: 1px dashed #d5d8dc;
+  border-radius: 6px;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.panel-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.panel-toolbar button,
+.tab {
+  padding: 5px 12px;
+  border: 1px solid #d5d8dc;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.slots {
+  display: flex;
+  flex: 2;
+  gap: 16px;
+}
+
+.tabbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tab.active {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+.statusbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 16px;
+  background: #ecf0f1;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.statusbar.ok {
+  color: #27ae60;
+}
+
+/* ---------- M1：文件列表 / 批量处理 / 结果列表 / 大图预览 ---------- */
+.primary {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+/* 修复：工具栏按钮选择器（.panel-toolbar button）优先级更高，会覆盖 .primary 的背景，
+   导致“开始批量处理”白底白字不可见；此处显式提高优先级覆盖。 */
+.panel-toolbar .primary {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.progress {
+  color: #2980b9;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.file-list,
+.result-list {
+  list-style: none;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.file-item,
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #f0f0f0;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badge-processing {
+  background: #fef3cd;
+  color: #8a6d3b;
+}
+
+.badge-success {
+  background: #d4efdf;
+  color: #1e8449;
+}
+
+.badge-failed {
+  background: #fadbd8;
+  color: #c0392b;
+}
+
+.preview-btn {
+  padding: 4px 10px;
+  border: 1px solid #d5d8dc;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.model-notice {
+  font-size: 12px;
+  color: #f5b041;
+}
+
+.empty {
+  color: #95a5a6;
+  font-size: 13px;
+  padding: 12px;
+}
+
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* 修复：hidden 属性必须真正隐藏（否则 display:flex 会覆盖浏览器默认的 [hidden] 规则） */
+.preview-modal[hidden] {
+  display: none;
+}
+
+.preview-modal img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.preview-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.preview-back:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- M2：人工辅助精修 ---------- */
+.refine-list-panel {
+  flex: 0 0 240px;
+}
+
+.refine-workspace {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.refine-workspace .panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.tool-btn {
+  padding: 5px 10px;
+  border: 1px solid #d5d8dc;
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.tool-btn.active {
+  background: #1abc9c;
+  color: #fff;
+  border-color: #1abc9c;
+}
+
+.size-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.size-label input[type="number"] {
+  width: 56px;
+  padding: 4px;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+}
+
+.size-label select {
+  padding: 4px 8px;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+}
+
+.round-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.canvas-wrap {
+  position: relative;
+  height: 480px;
+  background: repeating-conic-gradient(#eeeeee 0% 25%, #ffffff 0% 50%) 0 0 / 24px 24px;
+  border: 1px solid #d5d8dc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.canvas-wrap canvas {
+  display: block;
+}
+
+.canvas-hint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.refine-hint {
+  color: #95a5a6;
+  font-size: 13px;
+}
+
+#refine-file-list .result-item {
+  cursor: pointer;
+}
+
+#refine-file-list .result-item.selected {
+  background: #eafaf1;
+  outline: 1px solid #1abc9c;
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 精修逻辑选择（图槽 2 画布上方）与说明框（两槽下方） */
+#page-refine {
+  flex-wrap: wrap;
+}
+
+.logic-select-row {
+  margin-bottom: 10px;
+}
+
+.logic-desc-box {
+  flex: 1 1 100%;
+  background: #fbfcfd;
+  border: 1px dashed #d5d8dc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+
+.logic-desc-item {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.logic-desc-item strong {
+  color: #2c3e50;
+  margin-right: 8px;
+}
+
+.logic-desc-remark {
+  color: #1abc9c;
+  margin-right: 8px;
+}
+
+.logic-desc-detail {
+  margin: 4px 0 0;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+#btn-submit,
+#btn-save {
+  padding: 9px 24px;
+  font-size: 15px;
+}

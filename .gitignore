@@ -1,0 +1,18 @@
+# 图片素材与处理产物（本地使用，不上传）
+/source_img/
+/processed_img/
+/temp/
+
+# 本地开发文档与代理指令（不上传）
+/DEVELOPMENT.md
+/AGENTS.md
+/ENVIRONMENT.md
+/M0_技术文档.md
+/M1_技术文档.md
+/M2_技术文档.md
+/M3_技术文档.md
+/M4_技术文档.md
+
+# Python 缓存
+__pycache__/
+*.py[cod]
